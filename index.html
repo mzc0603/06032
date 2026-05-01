@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="趣味游戏厅 - 精选经典小游戏合集，包含2048、贪吃蛇、五子棋、扫雷、俄罗斯方块等热门游戏，免费在线畅玩！">
+  <meta name="keywords" content="小游戏,在线游戏,2048,贪吃蛇,五子棋,扫雷,俄罗斯方块,免费游戏,休闲游戏">
+  <meta name="author" content="趣味游戏厅">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="趣味游戏厅 - 经典小游戏合集">
+  <meta property="og:description" content="精选经典小游戏合集，免费在线畅玩！">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="zh_CN">
+  <title>趣味游戏厅 - 经典小游戏合集 | 免费在线畅玩</title>
+  <link rel="canonical" href="https://yourusername.github.io/game-hub/">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar" role="navigation" aria-label="主导航">
+      <a href="index.html" class="logo" aria-label="返回首页">
+        <span class="logo-icon">🎮</span>
+        <span>趣味游戏厅</span>
+      </a>
+      <div class="menu-toggle" onclick="toggleMenu()" aria-label="菜单" role="button" tabindex="0">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="index.html">首页</a></li>
+        <li><a href="games/2048.html">2048</a></li>
+        <li><a href="games/snake.html">贪吃蛇</a></li>
+        <li><a href="games/gomoku.html">五子棋</a></li>
+        <li><a href="games/minesweeper.html">扫雷</a></li>
+        <li><a href="games/tetris.html">俄罗斯方块</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>欢迎来到趣味游戏厅</h1>
+      <p>精选经典小游戏，随时随地免费畅玩，挑战你的最高分！</p>
+    </section>
+
+    <section class="games-grid" aria-label="游戏列表">
+      <article class="game-card fade-in" onclick="location.href='games/2048.html'" role="button" tabindex="0">
+        <span class="game-icon" aria-hidden="true">🔢</span>
+        <h3>2048</h3>
+        <p>滑动数字方块，合并相同数字，挑战2048！</p>
+        <span class="play-btn">开始游戏</span>
+      </article>
+
+      <article class="game-card fade-in" onclick="location.href='games/snake.html'" role="button" tabindex="0">
+        <span class="game-icon" aria-hidden="true">🐍</span>
+        <h3>贪吃蛇</h3>
+        <p>控制小蛇吃食物，不断成长，别撞到自己！</p>
+        <span class="play-btn">开始游戏</span>
+      </article>
+
+      <article class="game-card fade-in" onclick="location.href='games/gomoku.html'" role="button" tabindex="0">
+        <span class="game-icon" aria-hidden="true">⚫</span>
+        <h3>五子棋</h3>
+        <p>经典双人对战，五子连珠即可获胜！</p>
+        <span class="play-btn">开始游戏</span>
+      </article>
+
+      <article class="game-card fade-in" onclick="location.href='games/minesweeper.html'" role="button" tabindex="0">
+        <span class="game-icon" aria-hidden="true">💣</span>
+        <h3>扫雷</h3>
+        <p>推理排除地雷，考验你的逻辑思维！</p>
+        <span class="play-btn">开始游戏</span>
+      </article>
+
+      <article class="game-card fade-in" onclick="location.href='games/tetris.html'" role="button" tabindex="0">
+        <span class="game-icon" aria-hidden="true">🧱</span>
+        <h3>俄罗斯方块</h3>
+        <p>经典消除游戏，旋转方块，挑战极限！</p>
+        <span class="play-btn">开始游戏</span>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <nav class="footer-links" aria-label="页脚导航">
+        <a href="index.html">首页</a>
+        <a href="#about">关于我们</a>
+        <a href="#privacy">隐私政策</a>
+        <a href="#contact">联系方式</a>
+      </nav>
+      <p class="copyright">© 2024 趣味游戏厅. All rights reserved. 纯前端项目，可部署于 GitHub Pages.</p>
+    </div>
+  </footer>
+
+  <button class="sound-toggle" onclick="GameUtils.toggleSound()" aria-label="切换音效">🔊</button>
+
+  <script src="js/utils.js"></script>
+  <script>
+    document.querySelectorAll('.game-card').forEach(card => {
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          card.click();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

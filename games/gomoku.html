@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="在线玩五子棋游戏 - 经典双人对战棋类游戏，五子连珠即可获胜，支持手机和电脑。">
+  <meta name="keywords" content="五子棋,五子棋游戏,gomoku,棋类游戏,双人对战,在线游戏">
+  <meta name="author" content="趣味游戏厅">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="五子棋游戏 - 趣味游戏厅">
+  <meta property="og:description" content="经典双人对战棋类游戏，五子连珠即可获胜！">
+  <meta property="og:type" content="website">
+  <title>五子棋游戏 - 经典双人对战 | 趣味游戏厅</title>
+  <link rel="canonical" href="https://yourusername.github.io/game-hub/games/gomoku.html">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    #gameCanvas {
+      background: linear-gradient(145deg, #dcb35c 0%, #c9a227 100%);
+      border-radius: 12px;
+      cursor: pointer;
+      max-width: 100%;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+    }
+    .turn-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.8rem 1.5rem;
+      background: var(--card-bg);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .turn-stone {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    }
+    .turn-stone.black {
+      background: radial-gradient(circle at 30% 30%, #555, #000);
+    }
+    .turn-stone.white {
+      background: radial-gradient(circle at 30% 30%, #fff, #ccc);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="navbar" role="navigation" aria-label="主导航">
+      <a href="../index.html" class="logo" aria-label="返回首页">
+        <span class="logo-icon">🎮</span>
+        <span>趣味游戏厅</span>
+      </a>
+      <div class="menu-toggle" onclick="toggleMenu()" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="../index.html">首页</a></li>
+        <li><a href="2048.html">2048</a></li>
+        <li><a href="snake.html">贪吃蛇</a></li>
+        <li><a href="gomoku.html">五子棋</a></li>
+        <li><a href="minesweeper.html">扫雷</a></li>
+        <li><a href="tetris.html">俄罗斯方块</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <div class="game-container">
+      <div class="game-header">
+        <h1 class="game-title">五子棋</h1>
+        <div class="turn-indicator">
+          <span>当前回合：</span>
+          <div class="turn-stone black" id="turnStone"></div>
+          <span id="turnText">黑棋</span>
+        </div>
+      </div>
+
+      <div class="game-controls">
+        <button class="control-btn primary" onclick="game.restart()">🔄 重新开始</button>
+        <button class="control-btn secondary" onclick="game.undo()">↩️ 悔棋</button>
+      </div>
+
+      <div class="game-board">
+        <canvas id="gameCanvas" width="450" height="450"></canvas>
+      </div>
+
+      <div class="game-instructions">
+        <h3>游戏说明</h3>
+        <ul>
+          <li>点击棋盘交叉点落子，黑棋先行</li>
+          <li>横、竖、斜任意方向连成五子即获胜</li>
+          <li>支持悔棋功能，可撤销上一步</li>
+          <li>与朋友一起享受对弈乐趣！</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <nav class="footer-links">
+        <a href="../index.html">首页</a>
+        <a href="#about">关于我们</a>
+        <a href="#privacy">隐私政策</a>
+      </nav>
+      <p class="copyright">© 2024 趣味游戏厅. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <a href="../index.html" class="back-home" aria-label="返回首页">🏠</a>
+  <button class="sound-toggle" onclick="GameUtils.toggleSound()" aria-label="切换音效">🔊</button>
+
+  <script src="../js/utils.js"></script>
+  <script>
+    const game = {
+      canvas: null,
+      ctx: null,
+      board: [],
+      boardSize: 15,
+      cellSize: 30,
+      currentPlayer: 1,
+      history: [],
+      gameOver: false,
+      padding: 15,
+
+      init() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.resize();
+        this.reset();
+        this.canvas.addEventListener('click', (e) => this.handleClick(e));
+        window.addEventListener('resize', () => this.resize());
+      },
+
+      resize() {
+        const container = this.canvas.parentElement;
+        const maxSize = Math.min(container.clientWidth - 48, 450);
+        this.canvas.width = maxSize;
+        this.canvas.height = maxSize;
+        this.cellSize = (maxSize - this.padding * 2) / (this.boardSize - 1);
+        this.draw();
+      },
+
+      reset() {
+        this.board = Array(this.boardSize).fill(null).map(() => Array(this.boardSize).fill(0));
+        this.currentPlayer = 1;
+        this.history = [];
+        this.gameOver = false;
+        this.updateTurn();
+        this.draw();
+      },
+
+      handleClick(e) {
+        if (this.gameOver) return;
+
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const col = Math.round((x - this.padding) / this.cellSize);
+        const row = Math.round((y - this.padding) / this.cellSize);
+
+        if (col >= 0 && col < this.boardSize && row >= 0 && row < this.boardSize) {
+          this.placeStone(row, col);
+        }
+      },
+
+      placeStone(row, col) {
+        if (this.board[row][col] !== 0) return;
+
+        this.board[row][col] = this.currentPlayer;
+        this.history.push({ row, col, player: this.currentPlayer });
+        GameUtils.playSound('click');
+        this.draw();
+
+        if (this.checkWin(row, col)) {
+          this.gameOver = true;
+          const winner = this.currentPlayer === 1 ? '黑棋' : '白棋';
+          GameUtils.playSound('win');
+          setTimeout(() => {
+            GameUtils.showModal('🎉 游戏结束', `${winner}获胜！`, [
+              { text: '再来一局', onclick: 'game.restart();GameUtils.hideModal()', class: 'primary' }
+            ]);
+          }, 100);
+          return;
+        }
+
+        if (this.history.length === this.boardSize * this.boardSize) {
+          this.gameOver = true;
+          GameUtils.showModal('平局', '棋盘已满，双方平局！', [
+            { text: '再来一局', onclick: 'game.restart();GameUtils.hideModal()', class: 'primary' }
+          ]);
+          return;
+        }
+
+        this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
+        this.updateTurn();
+      },
+
+      checkWin(row, col) {
+        const directions = [
+          [[0, 1], [0, -1]],
+          [[1, 0], [-1, 0]],
+          [[1, 1], [-1, -1]],
+          [[1, -1], [-1, 1]]
+        ];
+
+        const player = this.board[row][col];
+
+        for (const [dir1, dir2] of directions) {
+          let count = 1;
+
+          for (const [dr, dc] of [dir1, dir2]) {
+            let r = row + dr;
+            let c = col + dc;
+            while (r >= 0 && r < this.boardSize && c >= 0 && c < this.boardSize && this.board[r][c] === player) {
+              count++;
+              r += dr;
+              c += dc;
+            }
+          }
+
+          if (count >= 5) return true;
+        }
+
+        return false;
+      },
+
+      undo() {
+        if (this.history.length === 0 || this.gameOver) return;
+        const last = this.history.pop();
+        this.board[last.row][last.col] = 0;
+        this.currentPlayer = last.player;
+        this.updateTurn();
+        this.draw();
+        GameUtils.playSound('click');
+      },
+
+      updateTurn() {
+        const stone = document.getElementById('turnStone');
+        const text = document.getElementById('turnText');
+        stone.className = 'turn-stone ' + (this.currentPlayer === 1 ? 'black' : 'white');
+        text.textContent = this.currentPlayer === 1 ? '黑棋' : '白棋';
+      },
+
+      draw() {
+        const ctx = this.ctx;
+        const size = this.canvas.width;
+
+        ctx.fillStyle = '#dcb35c';
+        ctx.fillRect(0, 0, size, size);
+
+        ctx.strokeStyle = '#8b7355';
+        ctx.lineWidth = 1;
+
+        for (let i = 0; i < this.boardSize; i++) {
+          const pos = this.padding + i * this.cellSize;
+          ctx.beginPath();
+          ctx.moveTo(this.padding, pos);
+          ctx.lineTo(size - this.padding, pos);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(pos, this.padding);
+          ctx.lineTo(pos, size - this.padding);
+          ctx.stroke();
+        }
+
+        const starPoints = [
+          [3, 3], [3, 7], [3, 11],
+          [7, 3], [7, 7], [7, 11],
+          [11, 3], [11, 7], [11, 11]
+        ];
+        ctx.fillStyle = '#8b7355';
+        for (const [r, c] of starPoints) {
+          ctx.beginPath();
+          ctx.arc(this.padding + c * this.cellSize, this.padding + r * this.cellSize, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        for (let r = 0; r < this.boardSize; r++) {
+          for (let c = 0; c < this.boardSize; c++) {
+            if (this.board[r][c] !== 0) {
+              this.drawStone(r, c, this.board[r][c]);
+            }
+          }
+        }
+
+        if (this.history.length > 0 && !this.gameOver) {
+          const last = this.history[this.history.length - 1];
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(
+            this.padding + last.col * this.cellSize,
+            this.padding + last.row * this.cellSize,
+            this.cellSize * 0.35,
+            0, Math.PI * 2
+          );
+          ctx.stroke();
+        }
+      },
+
+      drawStone(row, col, player) {
+        const ctx = this.ctx;
+        const x = this.padding + col * this.cellSize;
+        const y = this.padding + row * this.cellSize;
+        const radius = this.cellSize * 0.42;
+
+        const gradient = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, 0, x, y, radius);
+
+        if (player === 1) {
+          gradient.addColorStop(0, '#555');
+          gradient.addColorStop(1, '#000');
+        } else {
+          gradient.addColorStop(0, '#fff');
+          gradient.addColorStop(1, '#bbb');
+        }
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = player === 1 ? '#000' : '#999';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      },
+
+      restart() {
+        this.reset();
+        GameUtils.playSound('click');
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => game.init());
+  </script>
+</body>
+</html>

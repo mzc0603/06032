@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="在线玩扫雷游戏 - 经典益智推理游戏，排除所有地雷即可获胜，支持手机和电脑。">
+  <meta name="keywords" content="扫雷,扫雷游戏,minesweeper,益智游戏,推理游戏,在线游戏">
+  <meta name="author" content="趣味游戏厅">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="扫雷游戏 - 趣味游戏厅">
+  <meta property="og:description" content="经典益智推理游戏，考验你的逻辑思维！">
+  <meta property="og:type" content="website">
+  <title>扫雷游戏 - 经典益智推理游戏 | 趣味游戏厅</title>
+  <link rel="canonical" href="https://yourusername.github.io/game-hub/games/minesweeper.html">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .mine-grid {
+      display: grid;
+      gap: 2px;
+      background: #7b8798;
+      padding: 8px;
+      border-radius: 8px;
+      user-select: none;
+    }
+    .mine-cell {
+      width: clamp(28px, 8vw, 36px);
+      height: clamp(28px, 8vw, 36px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: clamp(14px, 4vw, 18px);
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.1s;
+    }
+    .mine-cell.hidden {
+      background: linear-gradient(145deg, #c0c7d1, #a8b0bb);
+      box-shadow: inset 2px 2px 4px rgba(255,255,255,0.5), inset -2px -2px 4px rgba(0,0,0,0.1);
+    }
+    .mine-cell.hidden:hover {
+      background: linear-gradient(145deg, #d0d7e1, #b8c0cb);
+    }
+    .mine-cell.revealed {
+      background: #e5e7eb;
+      cursor: default;
+    }
+    .mine-cell.flagged {
+      background: linear-gradient(145deg, #fde68a, #fcd34d);
+    }
+    .mine-cell.mine {
+      background: #ef4444;
+    }
+    .mine-cell[data-num="1"] { color: #3b82f6; }
+    .mine-cell[data-num="2"] { color: #10b981; }
+    .mine-cell[data-num="3"] { color: #ef4444; }
+    .mine-cell[data-num="4"] { color: #8b5cf6; }
+    .mine-cell[data-num="5"] { color: #f59e0b; }
+    .mine-cell[data-num="6"] { color: #06b6d4; }
+    .mine-cell[data-num="7"] { color: #1f2937; }
+    .mine-cell[data-num="8"] { color: #6b7280; }
+    .difficulty-btns {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .difficulty-btns .control-btn {
+      flex: 1;
+      min-width: 80px;
+    }
+    .difficulty-btns .control-btn.active {
+      background: var(--bg-gradient);
+      color: white;
+    }
+    .mine-counter {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: #1f2937;
+      color: #ef4444;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="navbar" role="navigation" aria-label="主导航">
+      <a href="../index.html" class="logo" aria-label="返回首页">
+        <span class="logo-icon">🎮</span>
+        <span>趣味游戏厅</span>
+      </a>
+      <div class="menu-toggle" onclick="toggleMenu()" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="../index.html">首页</a></li>
+        <li><a href="2048.html">2048</a></li>
+        <li><a href="snake.html">贪吃蛇</a></li>
+        <li><a href="gomoku.html">五子棋</a></li>
+        <li><a href="minesweeper.html">扫雷</a></li>
+        <li><a href="tetris.html">俄罗斯方块</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <div class="game-container">
+      <div class="game-header">
+        <h1 class="game-title">扫雷</h1>
+        <div class="score-board">
+          <div class="mine-counter">
+            <span>💣</span>
+            <span id="mineCount">10</span>
+          </div>
+          <div class="score-item">
+            <div class="score-label">用时</div>
+            <div class="score-value" id="timer">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-controls">
+        <div class="difficulty-btns">
+          <button class="control-btn secondary active" onclick="game.setDifficulty('easy')">简单</button>
+          <button class="control-btn secondary" onclick="game.setDifficulty('medium')">中等</button>
+          <button class="control-btn secondary" onclick="game.setDifficulty('hard')">困难</button>
+        </div>
+        <button class="control-btn primary" onclick="game.restart()">🔄 重新开始</button>
+      </div>
+
+      <div class="game-board">
+        <div class="mine-grid" id="mineGrid" role="grid" aria-label="扫雷游戏网格"></div>
+      </div>
+
+      <div class="game-instructions">
+        <h3>游戏说明</h3>
+        <ul>
+          <li>点击格子揭开，数字表示周围地雷数量</li>
+          <li>右键或长按格子标记地雷（插旗）</li>
+          <li>揭开所有非地雷格子即可获胜</li>
+          <li>点击地雷则游戏结束</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <nav class="footer-links">
+        <a href="../index.html">首页</a>
+        <a href="#about">关于我们</a>
+        <a href="#privacy">隐私政策</a>
+      </nav>
+      <p class="copyright">© 2024 趣味游戏厅. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <a href="../index.html" class="back-home" aria-label="返回首页">🏠</a>
+  <button class="sound-toggle" onclick="GameUtils.toggleSound()" aria-label="切换音效">🔊</button>
+
+  <script src="../js/utils.js"></script>
+  <script>
+    const game = {
+      board: [],
+      rows: 9,
+      cols: 9,
+      mines: 10,
+      flags: 0,
+      revealed: 0,
+      gameOver: false,
+      gameWon: false,
+      firstClick: true,
+      timer: 0,
+      timerInterval: null,
+      difficulties: {
+        easy: { rows: 9, cols: 9, mines: 10 },
+        medium: { rows: 16, cols: 16, mines: 40 },
+        hard: { rows: 16, cols: 30, mines: 99 }
+      },
+      currentDifficulty: 'easy',
+
+      init() {
+        this.createBoard();
+        this.loadHighScore();
+      },
+
+      setDifficulty(level) {
+        this.currentDifficulty = level;
+        const diff = this.difficulties[level];
+        this.rows = diff.rows;
+        this.cols = diff.cols;
+        this.mines = diff.mines;
+        
+        document.querySelectorAll('.difficulty-btns .control-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        this.restart();
+      },
+
+      createBoard() {
+        this.board = [];
+        for (let r = 0; r < this.rows; r++) {
+          this.board[r] = [];
+          for (let c = 0; c < this.cols; c++) {
+            this.board[r][c] = {
+              mine: false,
+              revealed: false,
+              flagged: false,
+              count: 0
+            };
+          }
+        }
+        this.render();
+      },
+
+      placeMines(excludeR, excludeC) {
+        let placed = 0;
+        while (placed < this.mines) {
+          const r = Math.floor(Math.random() * this.rows);
+          const c = Math.floor(Math.random() * this.cols);
+          if (!this.board[r][c].mine && !(r === excludeR && c === excludeC)) {
+            this.board[r][c].mine = true;
+            placed++;
+          }
+        }
+
+        for (let r = 0; r < this.rows; r++) {
+          for (let c = 0; c < this.cols; c++) {
+            if (!this.board[r][c].mine) {
+              this.board[r][c].count = this.countAdjacentMines(r, c);
+            }
+          }
+        }
+      },
+
+      countAdjacentMines(row, col) {
+        let count = 0;
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const r = row + dr;
+            const c = col + dc;
+            if (r >= 0 && r < this.rows && c >= 0 && c < this.cols && this.board[r][c].mine) {
+              count++;
+            }
+          }
+        }
+        return count;
+      },
+
+      render() {
+        const grid = document.getElementById('mineGrid');
+        grid.style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
+        grid.innerHTML = '';
+
+        for (let r = 0; r < this.rows; r++) {
+          for (let c = 0; c < this.cols; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'mine-cell';
+            cell.dataset.row = r;
+            cell.dataset.col = c;
+
+            const data = this.board[r][c];
+
+            if (data.revealed) {
+              cell.classList.add('revealed');
+              if (data.mine) {
+                cell.classList.add('mine');
+                cell.textContent = '💣';
+              } else if (data.count > 0) {
+                cell.textContent = data.count;
+                cell.dataset.num = data.count;
+              }
+            } else if (data.flagged) {
+              cell.classList.add('flagged');
+              cell.textContent = '🚩';
+            } else {
+              cell.classList.add('hidden');
+            }
+
+            cell.addEventListener('click', () => this.reveal(r, c));
+            cell.addEventListener('contextmenu', (e) => {
+              e.preventDefault();
+              this.toggleFlag(r, c);
+            });
+
+            let pressTimer;
+            cell.addEventListener('touchstart', (e) => {
+              pressTimer = setTimeout(() => {
+                e.preventDefault();
+                this.toggleFlag(r, c);
+              }, 500);
+            }, { passive: true });
+            cell.addEventListener('touchend', () => clearTimeout(pressTimer));
+            cell.addEventListener('touchmove', () => clearTimeout(pressTimer));
+
+            grid.appendChild(cell);
+          }
+        }
+
+        document.getElementById('mineCount').textContent = this.mines - this.flags;
+      },
+
+      reveal(row, col) {
+        if (this.gameOver || this.board[row][col].revealed || this.board[row][col].flagged) return;
+
+        if (this.firstClick) {
+          this.firstClick = false;
+          this.placeMines(row, col);
+          this.startTimer();
+        }
+
+        const cell = this.board[row][col];
+        cell.revealed = true;
+        this.revealed++;
+
+        if (cell.mine) {
+          this.gameOver = true;
+          this.revealAllMines();
+          GameUtils.playSound('lose');
+          GameUtils.showModal('💥 游戏结束', '你踩到地雷了！', [
+            { text: '重新开始', onclick: 'game.restart();GameUtils.hideModal()', class: 'primary' }
+          ]);
+          this.stopTimer();
+          return;
+        }
+
+        GameUtils.playSound('click');
+
+        if (cell.count === 0) {
+          for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+              const r = row + dr;
+              const c = col + dc;
+              if (r >= 0 && r < this.rows && c >= 0 && c < this.cols) {
+                this.reveal(r, c);
+              }
+            }
+          }
+        }
+
+        this.render();
+        this.checkWin();
+      },
+
+      toggleFlag(row, col) {
+        if (this.gameOver || this.board[row][col].revealed) return;
+
+        const cell = this.board[row][col];
+        cell.flagged = !cell.flagged;
+        this.flags += cell.flagged ? 1 : -1;
+        GameUtils.playSound('click');
+        this.render();
+      },
+
+      revealAllMines() {
+        for (let r = 0; r < this.rows; r++) {
+          for (let c = 0; c < this.cols; c++) {
+            if (this.board[r][c].mine) {
+              this.board[r][c].revealed = true;
+            }
+          }
+        }
+        this.render();
+      },
+
+      checkWin() {
+        const totalCells = this.rows * this.cols;
+        if (this.revealed === totalCells - this.mines) {
+          this.gameOver = true;
+          this.gameWon = true;
+          this.stopTimer();
+          GameUtils.playSound('win');
+          
+          const key = `minesweeper_${this.currentDifficulty}`;
+          const bestTime = GameUtils.getHighScore(key);
+          const isNewRecord = !bestTime || this.timer < bestTime;
+          
+          if (isNewRecord) {
+            GameUtils.saveHighScore(key, this.timer);
+          }
+          
+          GameUtils.showModal('🎉 恭喜获胜！', 
+            `用时：${this.timer}秒${isNewRecord ? ' (新纪录!)' : ''}`, [
+            { text: '再来一局', onclick: 'game.restart();GameUtils.hideModal()', class: 'primary' }
+          ]);
+        }
+      },
+
+      startTimer() {
+        this.timer = 0;
+        document.getElementById('timer').textContent = '0';
+        this.timerInterval = setInterval(() => {
+          this.timer++;
+          document.getElementById('timer').textContent = this.timer;
+        }, 1000);
+      },
+
+      stopTimer() {
+        if (this.timerInterval) {
+          clearInterval(this.timerInterval);
+          this.timerInterval = null;
+        }
+      },
+
+      restart() {
+        this.stopTimer();
+        this.gameOver = false;
+        this.gameWon = false;
+        this.firstClick = true;
+        this.flags = 0;
+        this.revealed = 0;
+        this.timer = 0;
+        document.getElementById('timer').textContent = '0';
+        this.createBoard();
+        GameUtils.playSound('click');
+      },
+
+      loadHighScore() {
+        const best = GameUtils.getHighScore(`minesweeper_${this.currentDifficulty}`);
+        if (best) {
+          console.log(`Best time for ${this.currentDifficulty}: ${best}s`);
+        }
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => game.init());
+  </script>
+</body>
+</html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="在线玩2048游戏 - 经典数字合并益智游戏，滑动方块挑战最高分，支持手机和电脑。">
+  <meta name="keywords" content="2048,2048游戏,数字游戏,益智游戏,在线游戏,免费游戏">
+  <meta name="author" content="趣味游戏厅">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="2048游戏 - 趣味游戏厅">
+  <meta property="og:description" content="经典数字合并益智游戏，挑战你的智力极限！">
+  <meta property="og:type" content="website">
+  <title>2048游戏 - 经典数字合并益智游戏 | 趣味游戏厅</title>
+  <link rel="canonical" href="https://yourusername.github.io/game-hub/games/2048.html">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 12px;
+      background: #bbada0;
+      border-radius: 12px;
+      width: min(90vw, 400px);
+      aspect-ratio: 1;
+    }
+    .grid-cell {
+      background: rgba(238, 228, 218, 0.35);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      font-weight: 700;
+      color: #776e65;
+      transition: all 0.15s ease;
+    }
+    .grid-cell[data-value="2"] { background: #eee4da; }
+    .grid-cell[data-value="4"] { background: #ede0c8; }
+    .grid-cell[data-value="8"] { background: #f2b179; color: #f9f6f2; }
+    .grid-cell[data-value="16"] { background: #f59563; color: #f9f6f2; }
+    .grid-cell[data-value="32"] { background: #f67c5f; color: #f9f6f2; }
+    .grid-cell[data-value="64"] { background: #f65e3b; color: #f9f6f2; }
+    .grid-cell[data-value="128"] { background: #edcf72; color: #f9f6f2; font-size: clamp(1.3rem, 4vw, 2.2rem); }
+    .grid-cell[data-value="256"] { background: #edcc61; color: #f9f6f2; font-size: clamp(1.3rem, 4vw, 2.2rem); }
+    .grid-cell[data-value="512"] { background: #edc850; color: #f9f6f2; font-size: clamp(1.3rem, 4vw, 2.2rem); }
+    .grid-cell[data-value="1024"] { background: #edc53f; color: #f9f6f2; font-size: clamp(1rem, 3vw, 1.8rem); }
+    .grid-cell[data-value="2048"] { background: #edc22e; color: #f9f6f2; font-size: clamp(1rem, 3vw, 1.8rem); }
+    .grid-cell.new {
+      animation: pop 0.2s ease;
+    }
+    @keyframes pop {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="navbar" role="navigation" aria-label="主导航">
+      <a href="../index.html" class="logo" aria-label="返回首页">
+        <span class="logo-icon">🎮</span>
+        <span>趣味游戏厅</span>
+      </a>
+      <div class="menu-toggle" onclick="toggleMenu()" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="../index.html">首页</a></li>
+        <li><a href="2048.html">2048</a></li>
+        <li><a href="snake.html">贪吃蛇</a></li>
+        <li><a href="gomoku.html">五子棋</a></li>
+        <li><a href="minesweeper.html">扫雷</a></li>
+        <li><a href="tetris.html">俄罗斯方块</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <div class="game-container">
+      <div class="game-header">
+        <h1 class="game-title">2048</h1>
+        <div class="score-board">
+          <div class="score-item">
+            <div class="score-label">当前分数</div>
+            <div class="score-value" id="currentScore">0</div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">最高分</div>
+            <div class="score-value" id="highScore">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-controls">
+        <button class="control-btn primary" onclick="game.restart()">🔄 重新开始</button>
+      </div>
+
+      <div class="game-board">
+        <div class="grid-container" id="grid" role="grid" aria-label="2048游戏网格"></div>
+      </div>
+
+      <div class="game-instructions">
+        <h3>游戏说明</h3>
+        <ul>
+          <li>使用方向键或滑动屏幕移动所有方块</li>
+          <li>相同数字的方块相撞时会合并</li>
+          <li>合并出2048即为胜利，继续挑战更高分数！</li>
+          <li>无法移动时游戏结束</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <nav class="footer-links">
+        <a href="../index.html">首页</a>
+        <a href="#about">关于我们</a>
+        <a href="#privacy">隐私政策</a>
+      </nav>
+      <p class="copyright">© 2024 趣味游戏厅. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <a href="../index.html" class="back-home" aria-label="返回首页">🏠</a>
+  <button class="sound-toggle" onclick="GameUtils.toggleSound()" aria-label="切换音效">🔊</button>
+
+  <script src="../js/utils.js"></script>
+  <script>
+    const game = {
+      grid: [],
+      score: 0,
+      size: 4,
+      touchStartX: 0,
+      touchStartY: 0,
+
+      init() {
+        this.grid = Array(this.size).fill(null).map(() => Array(this.size).fill(0));
+        this.score = 0;
+        this.addRandomTile();
+        this.addRandomTile();
+        this.render();
+        this.updateScore();
+        this.loadHighScore();
+      },
+
+      addRandomTile() {
+        const empty = [];
+        for (let r = 0; r < this.size; r++) {
+          for (let c = 0; c < this.size; c++) {
+            if (this.grid[r][c] === 0) empty.push({ r, c });
+          }
+        }
+        if (empty.length === 0) return false;
+        const { r, c } = empty[Math.floor(Math.random() * empty.length)];
+        this.grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+        return { r, c };
+      },
+
+      render() {
+        const container = document.getElementById('grid');
+        container.innerHTML = '';
+        for (let r = 0; r < this.size; r++) {
+          for (let c = 0; c < this.size; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            cell.setAttribute('role', 'gridcell');
+            const value = this.grid[r][c];
+            if (value > 0) {
+              cell.textContent = value;
+              cell.setAttribute('data-value', value);
+            }
+            container.appendChild(cell);
+          }
+        }
+      },
+
+      move(direction) {
+        let moved = false;
+        const oldGrid = this.grid.map(row => [...row]);
+
+        if (direction === 'left' || direction === 'right') {
+          for (let r = 0; r < this.size; r++) {
+            let row = this.grid[r].filter(v => v !== 0);
+            if (direction === 'right') row.reverse();
+            for (let i = 0; i < row.length - 1; i++) {
+              if (row[i] === row[i + 1]) {
+                row[i] *= 2;
+                this.score += row[i];
+                row.splice(i + 1, 1);
+                GameUtils.playSound('merge');
+              }
+            }
+            while (row.length < this.size) row.push(0);
+            if (direction === 'right') row.reverse();
+            this.grid[r] = row;
+          }
+        } else {
+          for (let c = 0; c < this.size; c++) {
+            let col = [];
+            for (let r = 0; r < this.size; r++) col.push(this.grid[r][c]);
+            col = col.filter(v => v !== 0);
+            if (direction === 'down') col.reverse();
+            for (let i = 0; i < col.length - 1; i++) {
+              if (col[i] === col[i + 1]) {
+                col[i] *= 2;
+                this.score += col[i];
+                col.splice(i + 1, 1);
+                GameUtils.playSound('merge');
+              }
+            }
+            while (col.length < this.size) col.push(0);
+            if (direction === 'down') col.reverse();
+            for (let r = 0; r < this.size; r++) this.grid[r][c] = col[r];
+          }
+        }
+
+        for (let r = 0; r < this.size; r++) {
+          for (let c = 0; c < this.size; c++) {
+            if (oldGrid[r][c] !== this.grid[r][c]) moved = true;
+          }
+        }
+
+        if (moved) {
+          const newTile = this.addRandomTile();
+          this.render();
+          this.updateScore();
+          if (newTile) {
+            const cells = document.querySelectorAll('.grid-cell');
+            const idx = newTile.r * this.size + newTile.c;
+            cells[idx].classList.add('new');
+          }
+          GameUtils.playSound('move');
+          if (this.checkWin()) {
+            setTimeout(() => {
+              GameUtils.showModal('🎉 恭喜！', '你成功合成了2048！', [
+                { text: '继续挑战', onclick: 'GameUtils.hideModal()', class: 'primary' }
+              ]);
+              GameUtils.playSound('win');
+            }, 300);
+          } else if (this.checkGameOver()) {
+            setTimeout(() => {
+              GameUtils.showModal('游戏结束', `最终得分：${this.score}`, [
+                { text: '重新开始', onclick: 'game.restart();GameUtils.hideModal()', class: 'primary' }
+              ]);
+              GameUtils.playSound('lose');
+            }, 300);
+          }
+        }
+      },
+
+      checkWin() {
+        for (let r = 0; r < this.size; r++) {
+          for (let c = 0; c < this.size; c++) {
+            if (this.grid[r][c] === 2048) return true;
+          }
+        }
+        return false;
+      },
+
+      checkGameOver() {
+        for (let r = 0; r < this.size; r++) {
+          for (let c = 0; c < this.size; c++) {
+            if (this.grid[r][c] === 0) return false;
+            if (c < this.size - 1 && this.grid[r][c] === this.grid[r][c + 1]) return false;
+            if (r < this.size - 1 && this.grid[r][c] === this.grid[r + 1][c]) return false;
+          }
+        }
+        return true;
+      },
+
+      updateScore() {
+        document.getElementById('currentScore').textContent = GameUtils.formatNumber(this.score);
+        if (GameUtils.saveHighScore('2048', this.score)) {
+          document.getElementById('highScore').textContent = GameUtils.formatNumber(this.score);
+        }
+      },
+
+      loadHighScore() {
+        document.getElementById('highScore').textContent = GameUtils.formatNumber(GameUtils.getHighScore('2048'));
+      },
+
+      restart() {
+        this.init();
+        GameUtils.playSound('click');
+      }
+    };
+
+    document.addEventListener('keydown', (e) => {
+      const keyMap = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
+      if (keyMap[e.key]) {
+        e.preventDefault();
+        game.move(keyMap[e.key]);
+      }
+    });
+
+    document.getElementById('grid').addEventListener('touchstart', (e) => {
+      game.touchStartX = e.touches[0].clientX;
+      game.touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.getElementById('grid').addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - game.touchStartX;
+      const dy = e.changedTouches[0].clientY - game.touchStartY;
+      const minSwipe = 30;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > minSwipe) {
+        game.move(dx > 0 ? 'right' : 'left');
+      } else if (Math.abs(dy) > minSwipe) {
+        game.move(dy > 0 ? 'down' : 'up');
+      }
+    }, { passive: true });
+
+    document.addEventListener('DOMContentLoaded', () => game.init());
+  </script>
+</body>
+</html>
